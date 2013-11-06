@@ -37,11 +37,12 @@
             ns (if-let [n (next-sibling elem)] (current n))
             d (depth elem)]
         (recur (current elem (inc curr))
-               (conj tree (into {} `[[:depth ~(if d (+ d old-depth))]
-                                     ~@(if p [:parent (+ p old-size)])
-                                     [:label ~l]
-                                     ~@(if fc (list :first-child (+ fc old-size)))
-                                     ~@(if ns (list :next-sibling (+ ns old-size)))])))))))
+               (conj tree
+                     (into {} `[[:depth ~(if d (+ d old-depth))]
+                                ~@(if p (list [:parent (+ p old-size)]))
+                                [:label ~l]
+                                ~@(if fc (list [:first-child (+ fc old-size)]))
+                                ~@(if ns (list [:next-sibling (+ ns old-size)]))])))))))
 
 (extend-protocol IOrderedTree
   OrderedTree

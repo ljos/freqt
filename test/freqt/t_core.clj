@@ -134,3 +134,40 @@
                                       (assoc-sibling (make-tree :b)))))
 
 
+
+(facts "About adding trees to trees."
+  (fact "adding a child tree to the current node should add the whole
+  tree to the current"
+    (-> (OrderedTree.
+         9
+         [{:depth 0           :label :r :first-child 1                }
+          {:depth 1 :parent 0 :label :a :first-child 2 :next-sibling 6}
+          {:depth 2 :parent 1 :label :a                :next-sibling 3}
+          {:depth 2 :parent 1 :label :b                :next-sibling 4}
+          {:depth 2 :parent 1 :label :a                :next-sibling 5}
+          {:depth 2 :parent 1 :label :b                               }
+          {:depth 1 :parent 0 :label :a :first-child 7                }
+          {:depth 2 :parent 6 :label :a                :next-sibling 8}
+          {:depth 2 :parent 6 :label :a                :next-sibling 9}
+          {:depth 2 :parent 6 :label :b                               }])
+        (assoc-child (OrderedTree.
+                      0
+                      [{:depth 0           :label :e :first-child 1                }
+                       {:depth 1 :parent 0 :label :f                :next-sibling 2}
+                       {:depth 1 :parent 0 :label :g                               }])))
+    => (OrderedTree.
+        10
+        [{:depth 0            :label :r :first-child 1                } ;0
+         {:depth 1 :parent 0  :label :a :first-child 2 :next-sibling 6} ;1
+         {:depth 2 :parent 1  :label :a                :next-sibling 3} ;2
+         {:depth 2 :parent 1  :label :b                :next-sibling 4} ;3
+         {:depth 2 :parent 1  :label :a                :next-sibling 5} ;4
+         {:depth 2 :parent 1  :label :b                               } ;5
+         {:depth 1 :parent 0  :label :a :first-child 7                } ;6
+         {:depth 2 :parent 6  :label :a                :next-sibling 8} ;7
+         {:depth 2 :parent 6  :label :a                :next-sibling 9} ;8
+         {:depth 2 :parent 6  :label :b :first-child 10               } ;9
+         {:depth 3 :parent 9  :label :e :first-child 11               } ;10
+         {:depth 4 :parent 10 :label :f                :next-sibling 12} ;11
+         {:depth 4 :parent 10 :label :g                               }] ;12
+        )))
