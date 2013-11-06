@@ -77,6 +77,8 @@
                         (conj {:depth (get-in tree [current :depth])
                                :parent (get-in tree [current :parent])
                                :label sibling}))))))
+(defn make-tree [node]
+  (OrderedTree. 0 [{:depth 0 :label node}]))
 
 (defn flatten [f tree]
   (loop [path [tree]
@@ -135,18 +137,19 @@
 
 (defn expand-subtree [height label rightmost]
   (if (zero? height)
-    (assoc-child rightmost label)
-    (assoc-sibling (nth-parent rightmost (dec height)) label)))
+    (assoc-child rightmost (make-tree label))
+    (assoc-sibling (nth-parent rightmost (dec height)) (make-tree label))))
 
 (defn calculate-subtree [tree label [subtree supports]]
   (loop [depth (depth subtree)
          acc []]
     (if (zero? depth)
-      (conj acc [(assoc-child subtree label)
+      (conj acc [(assoc-child subtree (make-tree label))
                  (rightmost-occurrence tree supports 0 label)])
       (recur (dec depth)
-             (conj acc [(assoc-sibling (nth-parent subtree (dec depth)) label)
+             (conj acc [(assoc-sibling (nth-parent subtree (dec depth)) (make-tree label))
                         (rightmost-occurrence tree supports depth label)])))))
+
 
 (defn calculate-subtrees [tree labels freqs]
   (apply concat
@@ -160,7 +163,7 @@
                                       {}
                                       (flatten label tree))]
                  (->> (for [label labels]
-                        [(OrderedTree. 0 [{:depth 0 :label label}])
+                        [(make-tree label)
                          (freqs label [])])
                       (frequent 0.2 (size tree))))
          acc '()]
