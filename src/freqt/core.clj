@@ -24,14 +24,32 @@
 
 (defrecord OrderedTree [current tree])
 
-(extend-type OrderedTree
-  IOrderedTree
+(defn- tree->vec [old-size old-depth elem]
+  (loop [elem elem
+         tree []]
+    (if (<= (size elem)
+            (current elem))
+      tree
+      (let [l (label elem)
+            curr (current elem)
+            p (if-let [p (parent elem)] (current p))
+            fc (if-let [c (first-child elem)] (current c))
+            ns (if-let [n (next-sibling elem)] (current n))
+            d (depth elem)]
+        (recur (current elem (inc curr))
+               (conj tree (into {} `[[:depth ~(if d (+ d old-depth))]
+                                     ~@(if p [:parent (+ p old-size)])
+                                     [:label ~l]
+                                     ~@(if fc (list :first-child (+ fc old-size)))
+                                     ~@(if ns (list :next-sibling (+ ns old-size)))])))))))
 
+(extend-protocol IOrderedTree
+  OrderedTree
   (size [this]
     (count (:tree this)))
 
-  (depth [this]
-    (get-in this [:tree (:current this) :depth]))
+  (depth [{:keys [tree current]}]
+    (get-in tree [current :depth]))
 
   (current
     ([this]
@@ -39,44 +57,41 @@
     ([this n]
        (OrderedTree. n (:tree this))))
 
-  (first-child [this]
-    (if-let [next (get-in (:tree this)
-                    [(:current this) :first-child])]
-      (OrderedTree. next (:tree this))))
+  (first-child [{:keys [tree current]}]
+    (if-let [next (get-in tree [current :first-child])]
+      (OrderedTree. next tree)))
 
-  (next-sibling [this]
-    (if-let [next (get-in (:tree this)
-                    [(:current this) :next-sibling])]
-      (OrderedTree. next (:tree this))))
+  (next-sibling [{:keys [current tree]}]
+    (if-let [next (get-in tree [current :next-sibling])]
+      (OrderedTree. next tree)))
 
-  (label [this]
-    (get-in (:tree this)
-      [(:current this) :label]))
+  (label [{:keys [tree current]}]
+    (get-in tree [current :label]))
 
-  (parent [this]
-    (if-let [next (get-in (:tree this)
-                    [(:current this) :parent])]
-      (OrderedTree. next (:tree this))))
+  (parent [{:keys [current tree]}]
+    (if-let [next (get-in tree [current :parent])]
+      (OrderedTree. next tree)))
 
-  (assoc-child [this child]
-    (let [current (:current this)
-          tree (:tree this)]
-      (OrderedTree. (count tree)
-                    (-> tree
-                        (assoc-in [current :first-child] (count tree))
-                        (conj {:depth (inc (get-in tree [current :depth]))
-                               :parent current
-                               :label child})))))
+  (assoc-child [{:keys [current tree] :as this} child]
+    (if (nil? child)
+      this
+      (let [addition (tree->vec (size this) (inc (depth this)) child)]
+        (OrderedTree. (count tree)
+                      (into (assoc-in tree [current :first-child]
+                              (count tree))
+                            (assoc-in addition [0 :parent]
+                              current))))))
 
-  (assoc-sibling [this sibling]
-    (let [current (:current this)
-          tree (:tree this)]
-      (OrderedTree. (count tree)
-                    (-> tree
-                        (assoc-in [current :next-sibling] (count tree))
-                        (conj {:depth (get-in tree [current :depth])
-                               :parent (get-in tree [current :parent])
-                               :label sibling}))))))
+  (assoc-sibling [{:keys [current tree] :as this} sibling]
+    (if (nil? sibling)
+      this
+      (let [addition (tree->vec (size this) (depth this) sibling)
+            parent (get-in tree [current :parent])]
+        (OrderedTree. (count tree)
+                      (into (assoc-in tree [current :next-sibling]
+                              (count tree))
+                            (assoc-in addition [0 :parent] parent)))))))
+
 (defn make-tree [node]
   (OrderedTree. 0 [{:depth 0 :label node}]))
 

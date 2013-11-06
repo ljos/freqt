@@ -1,4 +1,4 @@
-(defproject freqt "0.1.0"
+(defproject freqt "0.2.0"
   :description "Implementation of the freqt (frequent subtree discovery) algorithm."
   :license "ljos.mit-license.org"
   :dependencies [[org.clojure/clojure "1.5.1"]]
