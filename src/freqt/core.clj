@@ -174,16 +174,18 @@
            (calculate-subtree tree label freq))))
 
 (defn freqt [tree labels min-support]
-  (loop [freqt (let [freqs (reduce-kv (fn [freqs idx label]
-                                        (assoc freqs label (conj (freqs label []) idx)))
+  (let [freqs (let [freqs (reduce-kv (fn [f idx l]
+                                        (assoc f l (conj (f l []) idx)))
                                       {}
                                       (flatten label tree))]
-                 (->> (for [label labels]
-                        [(make-tree label)
-                         (freqs label [])])
-                      (frequent 0.2 (size tree))))
-         acc '()]
-    (if (empty? freqt)
-      acc
-      (recur (frequent 0.2 (size tree) (calculate-subtrees tree labels freqt))
-             (concat acc (map first freqt))))))
+                (->> (for [l labels]
+                       [(make-tree l) (freqs l [])])
+                     (frequent min-support (size tree))))]
+    (loop [freqt freqs
+           acc '()]
+      (if (empty? freqt)
+        acc
+        (recur (frequent min-support
+                         (size tree)
+                         (calculate-subtrees tree labels freqt))
+               (concat acc (map first freqt)))))))
